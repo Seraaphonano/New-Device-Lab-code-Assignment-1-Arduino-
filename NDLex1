@@ -1,4 +1,4 @@
-5.1 Hello World
+ 5.1 Hello World
 
 void setup() {
   pinMode(13 , OUTPUT) ; // initialize pin 13 as output
@@ -29,3 +29,569 @@ void loop() {
     lastTime = now;
   }
 }
+
+5.3 Serial Communication
+void setup() {
+  Serial.begin(9600); // open the serial port at 9600 bps
+  Serial.println("Hello World!") ; // print the message with a newline
+}
+void loop() {
+}
+
+
+another:
+
+#define LEDPIN 13
+void setup() {
+  Serial.begin (9600);
+  pinMode(LED_PIN, OUTPUT) ;
+}
+void loop() {
+  if (Serial.available()>0) {
+    char c= (char)Serial.read( ) ;
+    switch (c) {
+    case '1':
+    case 'i':
+    case 'I':
+      digitalWrite(LED_PIN, HIGH) ;
+      Serial.println("In") ;
+      break;
+    case '0':
+    case 'o':
+    case 'O':
+      digitalWrite(LED_PIN, LOW) ;
+      Serial.println("Out") ;
+      break;
+   }  
+  while(Serial.available()>0) {
+    Serial.read( ) ;
+  }
+  delay (250);
+ }
+}
+
+
+6. Arduino shields
+
+#include<LiquidCrystal.h> // add LCD library
+#define STEPS 10
+int pos= 0; // scroll steps done
+int inc= 1; // step inc
+LiquidCrystal lcd=LiquidCrystal(8 ,9 ,4 ,5 ,6 ,7); // define lcd object
+void setup(){
+  lcd.begin(16 , 2); // set LCD size  
+  lcd.print("Hello world!") ; // display message
+}
+void loop(){
+  if (inc>0) // scroll right?
+    lcd.scrollDisplayRight( ) ; // scroll one step righ
+  else // scroll left
+    lcd.scrollDisplayLeft( ) ; // scroll one step left
+  step( ) ; // count step
+  delay(400);
+}
+
+void step() {
+  pos+=inc; // increment steps
+  if (pos<−STEPS jj pos>STEPS) // outside bounds?
+    inc=−inc; // turn around
+}
+
+6.2 Buttons on the LCD shield
+#include<LiquidCrystal.h>
+#define KEYCOUNT 5
+int keyLimits [KEY_COUNT+1] = {50, 190, 380, 555, 790, 1024};
+char keyNames [KEY_COUNT+1] [10]
+  ={"Right ", "Up ", "Down " , "Left " , "Select" , "No key"};
+LiquidCrystal lcd=LiquidCrystal(8 , 9 , 4 , 5 , 6 , 7);
+
+void setup(){
+lcd.begin(16 , 2);
+}
+
+void loop(){
+  int val=analogRead(A0) ;
+  lcd.setCursor(0 , 0);
+  lcd.print(val) ;
+  lcd.print(" on A0 ") ;
+  for (int i= 0;i<=KEY_COUNT; i+= 1){
+    if (val<keyLimits[i] ) {
+      lcd.setCursor(0 , 1);
+      lcd.print(keyNames[i] ) ;
+      break;
+    }
+   }
+  delay(500);
+}
+
+6.3 The Servo class
+
+#include<Servo.h> // include library
+
+#defineMAXANGLE 170
+#defineMINANGLE 10
+#defineTICK 25
+
+Servo servo=Servo( ); // create servo object
+int pos= (MAX_ANGLE + MIN_ANGLE) / 2; // servo position
+int step= 1; // the change in servo angle
+long time= 0; // last state change
+void setup() {
+  servo.attach(A5) ; // indicate control wire to servo object
+}
+
+void loop(){
+  if (millis()−TICK>time) f // time to change?
+    time+=TICK;
+    if (pos>MAX_ANGLE jj pos<MIN_ANGLE){
+    step=−step; // change direction
+  }
+  pos+=step;
+  servo.write(pos) ; // set servo position in degrees
+ }
+}
+
+6.4 Ultrasonic Distance Sensor
+
+#definetrigPin A2
+#defineechoPin A1
+
+void setup(){
+  Serial.begin (9600);
+  pinMode(trigPin, OUTPUT) ;
+  pinMode(echoPin, INPUT) ;
+}
+
+void loop(){
+  digitalWrite(trigPin, HIGH) ;
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW) ;
+  int duration=pulseIn(echoPin, HIGH) ;
+  Serial.print(duration) ;
+  Serial.println(" ms") ;
+  Serial.print((duration / 2) / 29);
+  Serial.println(" cm") ;
+  delay(1000);
+}
+
+6.5 433 MHz Radio Communication
+
+#include<RCSwitch.h>
+
+RCSwitch mySwitch=RCSwitch() ;
+
+void setup(){
+  Serial.begin(9600);
+  Serial.println("RC receiver") ;
+  mySwitch.enableReceive(0); // Receiver on interrupt 0 =>that is pin #2
+}
+
+void loop(){
+  if (mySwitch.available()){
+  long value=mySwitch.getReceivedValue( ) ;
+    if (value== 0){
+      Serial.print("Unknown encoding") ;
+} else {
+    Serial.print("Received ") ;
+    Serial.print( value ) ;
+    Serial.print(" / ") ;
+    Serial.print( mySwitch.getReceivedBitlength() ) ;
+    Serial.print(" bit, protocol: ") ;
+    Serial.println( mySwitch.getReceivedProtocol() ) ;
+  }
+  mySwitch.resetAvailable( ) ;
+ }
+}
+
+#include<RCSwitch.h>
+#defineOnCode 5587989
+#defineOffCode 5587988
+#defineCodeLength 24
+#defineSendPin A5
+RCSwitch mySwitch=RCSwitch( ) ;
+
+void setup(){
+  pinMode(SendPin, OUTPUT) ;
+  mySwitch.enableTransmit(SendPin) ;
+  mySwitch.setProtocol(1);
+}
+void loop(){
+  mySwitch.send(OnCode, CodeLength) ;
+  delay(1000);
+  mySwitch.send(OffCode, CodeLength) ;
+  delay(1000);
+ }
+ 
+ 6.7 WiFi Communication
+ 
+#include<ESP8266WiFi.h>
+#include<ESP8266WebServer.h>
+#include<ESP8266mDNS.h>
+MDNSResponder mdns;
+const char∗ ssid= "...."; // insert name of local WiFi network
+const char∗ password= "...."; // insert the password of the WiFi network
+#define LISTENPORT 80
+ESP8266WebServer server=ESP8266WebServer(LISTEN_PORT) ;
+String webPage="";
+bool ledOn = false;
+
+void setup(){
+  Serial.begin(115200); // the serial speed of the Nodemcu
+  pinMode(D0, OUTPUT) ; // the LED of the Nodemcu
+  digitalWrite(D0, ledOn) ; // the actual status is inverted
+  
+  webPage+="<h1>WiFi LED control</h1>";
+  webPage+="<p><b>Press me <a href=\"button\">";
+  webPage+="<button style=\"background-color:blue;color:white;\">";
+  webPage+="LED</button></a></b></p>";
+
+
+  // make the WiFi connection
+  WiFi.begin(ssid, password) ;
+  Serial.println("Start connecting.") ;
+  while(WiFi.status() != WL_CONNECTED){
+    delay(500);
+    Serial.print(".") ;
+   }
+  Serial.println("") ;
+  Serial.print("Connected to ") ;
+  Serial.print(ssid) ;
+  Serial.print(". IP address: ") ;
+  Serial.println(WiFi.localIP( ) ) ;
+
+  if (mdns.begin("esp8266", WiFi.localIP())){
+    Serial.println("MDNS responder started") ;  
+   }
+// make handlers for input from WiFi connection
+  server.on("/", [ ](){ // refresh
+    server.send(200 , "text/html", webPage) ;
+  });
+  server.on("/button", [ ](){ // button pressed
+  server.send(200 , "text/html", webPage) ;
+  ledOn= !ledOn;
+  Serial.print("led ") ;
+  Serial.println(ledOn) ;
+  digitalWrite(D0, ledOn) ;
+  delay(1000);
+});
+
+  // start the server for WiFi input
+  server.begin( ) ;
+  Serial.println("HTTP server started") ;
+}
+void loop(){
+server.handleClient( );
+}
+
+
+7.1 WiFi
+ 
+ #include<ESP8266WiFi.h>
+#include<ESP8266WebServer.h>
+#include<ESP8266mDNS.h>
+
+#define LISTENPORT 80
+
+const char∗ ssid="ASUS_NDL"; // name of local WiFi network in the NDL
+const char∗ password="RT-AC66U"; // the password of the WiFi network
+
+MDNSResponder mdns;
+ESP8266WebServer server(LISTEN_PORT) ;
+String webPage="<h1>WiFi LED control</h1>";
+bool ledOn=false;
+void setup(){
+  Serial.begin(115200); // the serial speed
+  pinMode(LED_BUILTIN, OUTPUT) ; // the LED
+  digitalWrite(LED_BUILTIN, ledOn) ; // the actual status is inverted
+  
+  webPage+="<p>Press me <a href=\"button\">";
+  webPage+="<button style=\"background-color:blue;color:white;\">";
+  webPage+="LED</button></a></p>";
+  
+  WiFi.begin(ssid, password) ; // make the WiFi connection
+  Serial.println("Start connecting.") ;
+  while(WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".") ;
+  }
+  Serial.print("Connected to ") ;
+  Serial.print(ssid) ;
+  Serial.print(". IP address: ") ;
+  Serial.println(WiFi.localIP( ) ) ;
+
+  if (mdns.begin("esp8266", WiFi.localIP())) {
+    Serial.println("MDNS responder started") ;
+  }
+// make handlers for input from WiFi connection
+  server.on("/", [ ](){
+  server.send(200 , "text/html", webPage) ;
+  }）;
+  server.on("/button", [ ](){
+    server.send(200 , "text/html", webPage) ;
+    ledOn= !ledOn;
+    Serial.print("led ") ;
+    Serial.println(ledOn) ;
+    digitalWrite(LED_BUILTIN, !ledOn) ;
+    delay(1000);
+  });
+  server.begin( ) ; // start the server for WiFi input
+  Serial.println("HTTP server started") ;
+  }
+
+void loop(){
+server.handleClient( ) ;
+}
+
+7.4 Button Shield
+
+#defineBUTTON D3
+void setup(){
+  pinMode(BUTTON, INPUT) ;
+  pinMode(LED_BUILTIN, OUTPUT) ;
+}
+  void loop() {
+    digitalWrite(LED_BUILTIN, digitalRead(BUTTON) ) ;
+    delay(100);
+  }
+  
+  7.5 Passive Infra-Red Shield
+  
+  ∗Use the triple base to see the LED and use the PIR.
+∗/
+#definePIR D3
+void setup(){
+pinMode(PIR, INPUT) ;
+pinMode(LED_BUILTIN, OUTPUT) ;
+}
+void loop(){
+digitalWrite(LED_BUILTIN, ! digitalRead(PIR) ) ;
+delay(100);
+}
+
+7.6 Buzzer Shield
+
+#defineBUZZER D5//Buzzer control port , default D5
+void setup(){
+pinMode(BUZZER, OUTPUT) ;
+}
+void loop(){
+  analogWrite(BUZZER, 100);
+  delay(1000);
+  analogWrite(BUZZER, 0);
+  delay(2000);
+ }
+ 
+ 7.7 LED Matrix Shield
+ 
+ /∗
+download zip from https://github.com/wemos/WEMOSMatrixLEDShieldArduinoLibrary
+∗ Sketch>Include Library >add .ZIP Library
+∗
+See https://wiki.wemos.cc/products:d1Minishields:matrix led shield (check version number)
+∗ used pins:
+∗D5 CLK
+∗D7 DIN
+∗/
+#include<WEMOSMatrixLED. h>
+MLED mled(5); // make control object; set intensity to 5
+bool set=true;
+void setup() {
+  mled.intensity= 5; // 0<= intensity<8
+}
+void loop(){
+  for(int y= 0;y<8; y++){
+    for(int x= 0;x<8; x++){
+      mled.dot(x, y, set) ; // draw dot
+      mled.display( ) ;
+      delay(100);
+    }
+   }
+   set = !set;
+}
+
+
+Intensity control of the LEDs is demonstrated by the program below. The intensity
+is set for the entire shields, not for individual LEDs.
+#include<WEMOSMatrixLED. h>
+MLED mled(0); //set intensity = 0
+void setup(){
+  for(int i= 0;i<8; i++){
+    mled.disBuffer[i] = 0xff; // all LEDs, full screen
+  }
+}
+void loop(){
+for(int i= 0;i<8; i++){
+  mled.intensity=i; // change intensity to i
+  mled.display( ) ;
+  delay(1000);
+  }
+ }
+ 
+ 7.8 SHT30 Temperature Shield
+ 
+ /∗
+Download zipped library from https://github.com/wemos/WEMOSSHT3xArduinoLibrary
+∗/
+#include<WEMOSSHT3X.h>
+
+SHT3X sht30(0x45) ;
+
+void setup(){
+  Serial.begin(115200);
+}
+ void loop(){
+    if ( sht30.get() == 0){
+      Serial.print("Temperature in Celsius: ") ;
+      Serial.println(sht30.cTemp) ;
+      Serial.print("Relative Humidity: ") ;
+      Serial.println(sht30.humidity) ;
+      Serial.println( ) ;
+} else{
+    Serial.println("Error!") ;
+}
+delay(2000);
+}
+
+7.9 OLED Display Shield
+
+/∗
+Display button value on OLED
+The libraries can be added via the library manager: make sure you have verion:
+"Adafruit SSD1306 Wemos Mini OLED" by "Adafruit + mcauser", see below
+∗/
+#include<AdafruitGFX.h>
+#include<AdafruitSSD1306.h>
+
+#defineKEYA D3
+#defineKEYB D4
+#defineOLEDRESET 1 // GPIO1
+
+Adafruit_SSD1306 display(OLED_RESET) ;
+
+void setup(){
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C) ; // initialize with the I2C address
+  delay(1000);
+  pinMode(KEYA, INPUT) ;
+  pinMode(KEYB, INPUT) ;
+}
+void loop() f
+  display.clearDisplay( ) ;
+  display.setCursor(0 , 0);
+  display.setTextColor(WHITE) ;
+  display.setTextSize(2);
+  display.println("NDL") ;
+  display.setTextSize(1);
+  display.print("Key A = ") ;
+  display.println(digitalRead(KEYA) ) ;
+  display.print("Key B = ") ;
+  display.println(digitalRead(KEYB) ) ;
+  display.display( ) ;
+  delay(200);
+}
+
+7.10 Motor Shield 2.0.0
+
+#include<Wire.h>
+#include<LOLINI2CMOTOR.h>
+#definePWMFREQUENCY 1000
+
+LOLIN_I2C_MOTOR motor(DEFAULT_I2C_MOTOR_ADDRESS) ; //I2C address 0x30 SEE THENOTEBELOW
+void setup(){
+  while(motor.PRODUCT_ID!= PRODUCT_ID_I2C_MOTOR) f //wait motor shield ready.
+    motor.getInfo( ) ;
+   }
+ }
+void loop(){
+  motor.changeFreq(MOTOR_CH_BOTH, PWM_FREQUENCY) ;
+  motor.changeStatus(MOTOR_CH_A, MOTOR_STATUS_CCW) ;
+  for (int duty= 40;duty<= 100;duty+= 1){
+    motor.changeDuty(MOTOR_CH_A, duty) ;
+    delay(200);
+   }
+  motor.changeStatus(MOTOR_CH_A, MOTOR_STATUS_STANDBY) ;
+  delay(500);
+}
+ 
+ 7.11 Hand Gesture Recognition Sensor
+ 
+ #include<Wire.h>
+#include"paj7620.h"
+/∗
+Notice: When you want to recognize the Forward/Backward gestures , your gestures '
+reaction time must less than GESENTRYTIME(0.8s).
+You also can adjust the reaction time according to the actual circumstance.
+∗/
+#defineGESREACTIONTIME 500
+#defineGESENTRYTIME 800
+#defineGESQUITTIME 1000
+#defineI2CADDRESS 0x43
+#defineI2CADDRESS2 0x44
+void setup(){
+  Serial.begin(9600);
+  uint8_t error=paj7620Init( ) ; // initialize Paj7620 registers
+  if (error){
+    Serial.print("INIT ERROR,CODE: ") ;
+    Serial.println(error) ;
+   }
+}
+
+void loop(){
+  uint8_t data= 0 ,data1= 0 ,error;
+  error=paj7620ReadReg(I2C_ADDRESS, 1 , &data) ; // Read gesture result .
+  if ( !error){
+    switch (data) {
+      case GES_RIGHT_FLAG:
+        Serial.println("Right") ;
+        break;
+      case GES_LEFT_FLAG:
+        Serial.println("Left") ;
+        break;
+      case GES_UP_FLAG:
+        Serial.println("Up") ;
+        break;
+      case GES_DOWN_FLAG:
+        Serial.println("Down") ;
+        break;
+      case GES_FORWARD_FLAG:
+        Serial.println("Forward") ;
+        delay(GES_QUIT_TIME) ;
+        break;
+      case GES_BACKWARD_FLAG:
+        Serial.println("Backward") ;
+        delay(GES_QUIT_TIME) ;
+        break;
+      case GES_CLOCKWISE_FLAG:
+        Serial.println("Clockwise") ;
+        break;
+      case GES_COUNT_CLOCKWISE_FLAG:
+        Serial.println("anti-clockwise") ;
+        break;
+      default:
+        paj7620ReadReg(I2C_ADDRESS2, 1 , &data) ;
+        if (data==GES_WAVE_FLAG) f
+            Serial.println("wave") ;
+        } else{
+            Serial.print(".") ;
+          }
+          break;
+    }
+}
+delay(100);
+}
+
+7.12 Multiple Subtasks
+
+#defineDELAY 1000
+  bool ledOn=false; // status of LED
+  long lastTime= 0; // last status switch
+void setup(){
+  pinMode(LED_BUILTIN, OUTPUT) ;
+}
+void loop(){
+  if (millis()−DELAY>lastTime) { // time to change?
+    ledOn=notledOn;
+    digitalWrite(LED_BUILTIN, ledOn ) ;
+    lastTime+=DELAY;
+   }
+}
+ 
