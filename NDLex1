@@ -1,0 +1,31 @@
+5.1 Hello World
+
+void setup() {
+  pinMode(13 , OUTPUT) ; // initialize pin 13 as output
+}
+void loop() {
+  digitalWrite(13 , HIGH) ; // switch LED on (HIGH voltage)
+  delay(1000); // wait 1000 ms, i .e. one second
+  digitalWrite(13 , LOW) ; // switch LED off (LOW voltage)
+  delay(1000); // wait a second
+}
+
+
+5.2 Hello World without delay
+
+#defineDELAY 1000
+bool ledOn = false;
+unsigned long lastTime= 0;
+
+void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+}
+
+void loop() {
+  unsigned longnow=millis();
+  if (now−DELAY>lastTime){
+    ledOn= !ledOn;
+    digitalWrite(LED_BUILTIN, ledOn);
+    lastTime = now;
+  }
+}
