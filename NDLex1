@@ -1,4 +1,37 @@
- 5.1 Hello World
+#include <bits/stdc++.h> 
+using namespace std; 
+
+bool checkLetters(string x){
+    
+    for(int i=0; i<x.length();i++){
+        if(x[i] != 'U' && x[i] != 'D' && x[i] !=  'R' && x[i] != 'L'
+        && x[i] != 'u' && x[i] != 'd' && x[i] !=  'r' && x[i] != 'l'){
+            cout<<x[i];
+            return false;
+        }
+            
+    }
+    return true;
+}
+
+
+int main(){ 
+    string temp = "LLLD";
+     char tab2[1024];
+    strcpy(tab2, temp.c_str());
+    cout<< tab2[3];    
+    
+    bool test = checkLetters(temp);
+    cout<<test;
+
+    return 0; 
+} 
+
+
+
+
+
+5.1 Hello World
 
 void setup() {
   pinMode(13 , OUTPUT) ; // initialize pin 13 as output
